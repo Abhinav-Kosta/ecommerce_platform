@@ -5,6 +5,16 @@ const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 
+const AppError = require("./utils/AppError");
+const asyncHandler = require("./utils/asyncHandler");
+const validateRequest = require("./middleware/validateRequest");
+const {
+  paginationQuerySchema,
+} = require("./validators/commonValidators");
+
+const errorMiddleware = require("./middleware/errorMiddleware");
+const notFoundMiddleware = require("./middleware/notFoundMiddleware");
+
 const app = express();
 
 app.use(helmet());
@@ -43,5 +53,10 @@ app.get("/api/v1/health/db", (req, res) => {
     message: "Database connection is healthy",
   });
 });
+
+//Testing purpose
+
+app.use(notFoundMiddleware);
+app.use(errorMiddleware);
 
 module.exports = app;
