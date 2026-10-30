@@ -12,6 +12,8 @@ const {
   paginationQuerySchema,
 } = require("./validators/commonValidators");
 
+const authRoutes = require("./routes/authRoutes");
+
 const errorMiddleware = require("./middleware/errorMiddleware");
 const notFoundMiddleware = require("./middleware/notFoundMiddleware");
 
@@ -53,6 +55,8 @@ app.get("/api/v1/health/db", (req, res) => {
     message: "Database connection is healthy",
   });
 });
+
+app.use("/api/v1/auth", authRoutes);
 
 //Testing purpose
 
