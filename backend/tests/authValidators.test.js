@@ -1,4 +1,4 @@
-const { registerSchema } = require("../src/validators/authValidators");
+const { registerSchema, loginSchema } = require("../src/validators/authValidators");
 
 describe("Registration validation schema", () => {
   it("accepts valid registration data", () => {
@@ -48,5 +48,91 @@ describe("Registration validation schema", () => {
 
     expect(result.error).toBeDefined();
     expect(result.error.details.length).toBeGreaterThan(0);
+  });
+});
+
+describe("loginSchema", () => {
+  test("should accept valid email and password", () => {
+    const input = {
+      email: "customer@example.com",
+      password: "SecurePass123",
+    };
+
+    const { error, value } = loginSchema.validate(input);
+
+    expect(error).toBeUndefined();
+    expect(value.email).toBe("customer@example.com");
+    expect(value.password).toBe("SecurePass123");
+  });
+
+  test("should normalize email to lowercase and trim whitespace", () => {
+    const input = {
+      email: "  CUSTOMER@EXAMPLE.COM  ",
+      password: "SecurePass123",
+    };
+
+    const { error, value } = loginSchema.validate(input);
+
+    expect(error).toBeUndefined();
+    expect(value.email).toBe("customer@example.com");
+  });
+
+  test("should reject an invalid email", () => {
+    const input = {
+      email: "not-an-email",
+      password: "SecurePass123",
+    };
+
+    const { error } = loginSchema.validate(input);
+
+    expect(error).toBeDefined();
+    expect(error.details[0].path).toEqual(["email"]);
+  });
+
+  test("should reject a missing email", () => {
+    const input = {
+      password: "SecurePass123",
+    };
+
+    const { error } = loginSchema.validate(input);
+
+    expect(error).toBeDefined();
+    expect(error.details[0].path).toEqual(["email"]);
+  });
+
+  test("should reject a missing password", () => {
+    const input = {
+      email: "customer@example.com",
+    };
+
+    const { error } = loginSchema.validate(input);
+
+    expect(error).toBeDefined();
+    expect(error.details[0].path).toEqual(["password"]);
+  });
+
+  test("should reject an empty password", () => {
+    const input = {
+      email: "customer@example.com",
+      password: "",
+    };
+
+    const { error } = loginSchema.validate(input);
+
+    expect(error).toBeDefined();
+    expect(error.details[0].path).toEqual(["password"]);
+  });
+
+  test("should reject an unexpected role field", () => {
+    const input = {
+      email: "customer@example.com",
+      password: "SecurePass123",
+      role: "admin",
+    };
+
+    const { error } = loginSchema.validate(input);
+
+    expect(error).toBeDefined();
+    expect(error.details[0].path).toEqual(["role"]);
   });
 });

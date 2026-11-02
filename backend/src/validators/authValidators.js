@@ -35,9 +35,25 @@ const registerSchema = Joi.object({
       "string.empty": "Password is required",
       "any.required": "Password is required",
     }),
-})
-  .unknown(false);
+}).unknown(false);
+
+const loginSchema = Joi.object({
+  email: Joi.string()
+    .trim()
+    .lowercase()
+    .email()
+    .max(254)
+    .required(),
+
+  password: Joi.string()
+    .required()
+    .messages({
+      "string.empty": "Password is required",
+      "any.required": "Password is required",
+    }),
+}).unknown(false);
 
 module.exports = {
   registerSchema,
+  loginSchema,
 };

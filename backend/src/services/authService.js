@@ -42,6 +42,34 @@ const registerUser = async ({ name, email, password }) => {
   }
 };
 
+const loginUser = async ({ email, password }) => {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const user = await User.findOne({ email: normalizedEmail })
+    .select("+passwordHash");
+
+  if (!user) {
+    throw new AppError("Invalid email or password", 401);
+  }
+
+  const isPasswordValid = await bcrypt.compare(
+    password,
+    user.passwordHash
+  );
+
+  if (!isPasswordValid) {
+    throw new AppError("Invalid email or password", 401);
+  }
+
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+};
+
 module.exports = {
   registerUser,
+  loginUser,
 };

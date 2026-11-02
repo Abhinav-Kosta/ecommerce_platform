@@ -5,11 +5,13 @@ jest.mock("../src/models/User", () => ({
 
 jest.mock("bcryptjs", () => ({
   hash: jest.fn(),
+  compare: jest.fn(),
 }));
 
 const User = require("../src/models/User");
 const bcrypt = require("bcryptjs");
-const { registerUser } = require("../src/services/authService");
+const AppError = require("../src/utils/AppError");
+const { registerUser, loginUser } = require("../src/services/authService");
 
 describe("Authentication service - registration", () => {
   beforeEach(() => {
@@ -101,5 +103,132 @@ describe("Authentication service - registration", () => {
       statusCode: 409,
       message: "Email is already registered",
     });
+  });
+});
+
+describe("loginUser", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("should successfully log in a user with valid credentials", async () => {
+    const mockUser = {
+      _id: "user123",
+      name: "Test Customer",
+      email: "customer@example.com",
+      role: "customer",
+      passwordHash: "hashedPassword",
+    };
+
+    const selectMock = jest.fn().mockResolvedValue(mockUser);
+
+    User.findOne.mockReturnValue({
+      select: selectMock,
+    });
+
+    bcrypt.compare.mockResolvedValue(true);
+
+    const result = await loginUser({
+      email: "customer@example.com",
+      password: "SecurePass123",
+    });
+
+    expect(User.findOne).toHaveBeenCalledWith({
+      email: "customer@example.com",
+    });
+
+    expect(selectMock).toHaveBeenCalledWith("+passwordHash");
+
+    expect(bcrypt.compare).toHaveBeenCalledWith(
+      "SecurePass123",
+      "hashedPassword"
+    );
+
+    expect(result).toEqual({
+      id: "user123",
+      name: "Test Customer",
+      email: "customer@example.com",
+      role: "customer",
+    });
+  });
+
+  test("should reject login when the password is incorrect", async () => {
+    const mockUser = {
+      _id: "user123",
+      name: "Test Customer",
+      email: "customer@example.com",
+      role: "customer",
+      passwordHash: "hashedPassword",
+    };
+
+    User.findOne.mockReturnValue({
+      select: jest.fn().mockResolvedValue(mockUser),
+    });
+
+    bcrypt.compare.mockResolvedValue(false);
+
+    await expect(
+      loginUser({
+        email: "customer@example.com",
+        password: "WrongPassword123",
+      })
+    ).rejects.toMatchObject({
+      message: "Invalid email or password",
+      statusCode: 401,
+    });
+
+    expect(bcrypt.compare).toHaveBeenCalledWith(
+      "WrongPassword123",
+      "hashedPassword"
+    );
+  });
+
+  test("should reject login when the user does not exist", async () => {
+    const selectMock = jest.fn().mockResolvedValue(null);
+
+    User.findOne.mockReturnValue({
+      select: selectMock,
+    });
+
+    await expect(
+      loginUser({
+        email: "unknown@example.com",
+        password: "SecurePass123",
+      })
+    ).rejects.toMatchObject({
+      message: "Invalid email or password",
+      statusCode: 401,
+    });
+
+    expect(bcrypt.compare).not.toHaveBeenCalled();
+  });
+
+  test("should not return passwordHash in the user object", async () => {
+    const mockUser = {
+      _id: "user123",
+      name: "Test Customer",
+      email: "customer@example.com",
+      role: "customer",
+      passwordHash: "hashedPassword",
+    };
+
+    User.findOne.mockReturnValue({
+      select: jest.fn().mockResolvedValue(mockUser),
+    });
+
+    bcrypt.compare.mockResolvedValue(true);
+
+    const result = await loginUser({
+      email: "customer@example.com",
+      password: "SecurePass123",
+    });
+
+    expect(result).not.toHaveProperty("passwordHash");
+    expect(Object.keys(result)).toEqual([
+      "id",
+      "name",
+      "email",
+      "role",
+    ]);
   });
 });
