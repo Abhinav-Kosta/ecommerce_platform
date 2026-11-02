@@ -1,5 +1,6 @@
 jest.mock("../src/models/User", () => ({
   findOne: jest.fn(),
+  findById: jest.fn(),
   create: jest.fn(),
 }));
 
@@ -11,7 +12,7 @@ jest.mock("bcryptjs", () => ({
 const User = require("../src/models/User");
 const bcrypt = require("bcryptjs");
 const AppError = require("../src/utils/AppError");
-const { registerUser, loginUser } = require("../src/services/authService");
+const { registerUser, loginUser, changePassword } = require("../src/services/authService");
 
 describe("Authentication service - registration", () => {
   beforeEach(() => {
@@ -230,5 +231,83 @@ describe("loginUser", () => {
       "email",
       "role",
     ]);
+  });
+});
+
+describe("changePassword", () => {
+  let mockUser;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    mockUser = {
+      passwordHash: "old-hashed-password",
+      save: jest.fn().mockResolvedValue(true),
+    };
+  });
+
+  test("should change the password successfully", async () => {
+    User.findById.mockReturnValue({
+      select: jest.fn().mockResolvedValue(mockUser),
+    });
+
+    bcrypt.compare.mockResolvedValue(true);
+    bcrypt.hash.mockResolvedValue("new-hashed-password");
+
+    const result = await changePassword(
+      "user123",
+      "OldPassword123",
+      "NewPassword123"
+    );
+
+    expect(bcrypt.compare).toHaveBeenCalledWith(
+      "OldPassword123",
+      "old-hashed-password"
+    );
+
+    expect(bcrypt.hash).toHaveBeenCalledWith(
+      "NewPassword123",
+      12
+    );
+
+    expect(mockUser.passwordHash).toBe("new-hashed-password");
+    expect(mockUser.save).toHaveBeenCalledTimes(1);
+
+    expect(result).toEqual({
+      message: "Password changed successfully",
+    });
+  });
+
+  test("should reject when the user does not exist", async () => {
+    User.findById.mockReturnValue({
+      select: jest.fn().mockResolvedValue(null),
+    });
+
+    await expect(
+      changePassword("user123", "OldPassword123", "NewPassword123")
+    ).rejects.toMatchObject({
+      statusCode: 404,
+      message: "User not found",
+    });
+
+    expect(bcrypt.compare).not.toHaveBeenCalled();
+  });
+
+  test("should reject an incorrect current password", async () => {
+    User.findById.mockReturnValue({
+      select: jest.fn().mockResolvedValue(mockUser),
+    });
+
+    bcrypt.compare.mockResolvedValue(false);
+
+    await expect(
+      changePassword("user123", "WrongPassword123", "NewPassword123")
+    ).rejects.toMatchObject({
+      statusCode: 401,
+      message: "Current password is incorrect",
+    });
+
+    expect(bcrypt.hash).not.toHaveBeenCalled();
+    expect(mockUser.save).not.toHaveBeenCalled();
   });
 });

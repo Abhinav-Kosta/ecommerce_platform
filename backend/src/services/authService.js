@@ -69,7 +69,34 @@ const loginUser = async ({ email, password }) => {
   };
 };
 
+const changePassword = async (userId, currentPassword, newPassword) => {
+  const user = await User.findById(userId).select("+passwordHash");
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const isPasswordValid = await bcrypt.compare(
+    currentPassword,
+    user.passwordHash
+  );
+
+  if (!isPasswordValid) {
+    throw new AppError("Current password is incorrect", 401);
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+
+  user.passwordHash = passwordHash;
+  await user.save();
+
+  return {
+    message: "Password changed successfully",
+  };
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  changePassword,
 };

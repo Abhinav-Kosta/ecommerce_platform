@@ -53,7 +53,22 @@ const loginSchema = Joi.object({
     }),
 }).unknown(false);
 
+const changePasswordSchema = Joi.object({
+  currentPassword: Joi.string().required().messages({
+    "string.empty": "Current password is required",
+    "any.required": "Current password is required",
+  }),
+
+  newPassword: Joi.string().min(8).max(72).required().messages({
+    "string.empty": "New password is required",
+    "string.min": "New password must be at least 8 characters",
+    "string.max": "New password cannot exceed 72 characters",
+    "any.required": "New password is required",
+  }),
+}).unknown(false);
+
 module.exports = {
   registerSchema,
   loginSchema,
+  changePasswordSchema,
 };

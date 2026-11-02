@@ -1,4 +1,4 @@
-const { registerSchema, loginSchema } = require("../src/validators/authValidators");
+const { registerSchema, loginSchema, changePasswordSchema } = require("../src/validators/authValidators");
 
 describe("Registration validation schema", () => {
   it("accepts valid registration data", () => {
@@ -134,5 +134,51 @@ describe("loginSchema", () => {
 
     expect(error).toBeDefined();
     expect(error.details[0].path).toEqual(["role"]);
+  });
+});
+
+describe("Change Password Validation", () => {
+  test("should accept valid current and new passwords", () => {
+    const result = changePasswordSchema.validate({
+      currentPassword: "OldPassword123",
+      newPassword: "NewPassword123",
+    });
+
+    expect(result.error).toBeUndefined();
+  });
+
+  test("should reject a missing current password", () => {
+    const result = changePasswordSchema.validate({
+      newPassword: "NewPassword123",
+    });
+
+    expect(result.error).toBeDefined();
+  });
+
+  test("should reject a missing new password", () => {
+    const result = changePasswordSchema.validate({
+      currentPassword: "OldPassword123",
+    });
+
+    expect(result.error).toBeDefined();
+  });
+
+  test("should reject a new password shorter than 8 characters", () => {
+    const result = changePasswordSchema.validate({
+      currentPassword: "OldPassword123",
+      newPassword: "Short1",
+    });
+
+    expect(result.error).toBeDefined();
+  });
+
+  test("should reject unexpected fields", () => {
+    const result = changePasswordSchema.validate({
+      currentPassword: "OldPassword123",
+      newPassword: "NewPassword123",
+      role: "admin",
+    });
+
+    expect(result.error).toBeDefined();
   });
 });
