@@ -18,13 +18,25 @@ const protect = asyncHandler(async (req, res, next) => {
     throw new AppError("Invalid or expired authentication token", 401);
   }
 
-  const user = await User.findById(decoded.id);
+  const user = await User.findById(decoded.id).select("+tokenVersion");
 
   if (!user) {
-    throw new AppError("The user associated with this token no longer exists", 401);
+    throw new AppError(
+      "The user associated with this token no longer exists",
+      401
+    );
+  }
+
+  // Reject tokens issued before the user's latest password change.
+  if (decoded.tokenVersion !== user.tokenVersion) {
+    throw new AppError(
+      "Your session is no longer valid. Please log in again.",
+      401
+    );
   }
 
   req.user = {
+    _id: user._id,
     id: user._id,
     name: user.name,
     email: user.email,

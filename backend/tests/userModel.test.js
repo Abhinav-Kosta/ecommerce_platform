@@ -43,3 +43,26 @@ describe("User model", () => {
     expect(User.schema.path("passwordHash").options.select).toBe(false);
   });
 });
+
+describe("User tokenVersion", () => {
+  test("should default tokenVersion to 0", () => {
+    const user = new User({
+      name: "Test User",
+      email: "test@example.com",
+      passwordHash: "hashed-password",
+    });
+
+    expect(user.tokenVersion).toBe(0);
+  });
+
+  test("should accept a custom tokenVersion", () => {
+    const user = new User({
+      name: "Test User",
+      email: "test@example.com",
+      passwordHash: "hashed-password",
+      tokenVersion: 2,
+    });
+
+    expect(user.tokenVersion).toBe(2);
+  });
+});

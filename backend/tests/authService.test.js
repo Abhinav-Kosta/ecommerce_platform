@@ -118,6 +118,7 @@ describe("loginUser", () => {
       name: "Test Customer",
       email: "customer@example.com",
       role: "customer",
+      tokenVersion: 2,
       passwordHash: "hashedPassword",
     };
 
@@ -138,7 +139,7 @@ describe("loginUser", () => {
       email: "customer@example.com",
     });
 
-    expect(selectMock).toHaveBeenCalledWith("+passwordHash");
+    expect(selectMock).toHaveBeenCalledWith("+passwordHash +tokenVersion");
 
     expect(bcrypt.compare).toHaveBeenCalledWith(
       "SecurePass123",
@@ -150,6 +151,7 @@ describe("loginUser", () => {
       name: "Test Customer",
       email: "customer@example.com",
       role: "customer",
+      tokenVersion: 2,
     });
   });
 
@@ -159,6 +161,7 @@ describe("loginUser", () => {
       name: "Test Customer",
       email: "customer@example.com",
       role: "customer",
+      tokenVersion: 2,      
       passwordHash: "hashedPassword",
     };
 
@@ -210,6 +213,7 @@ describe("loginUser", () => {
       name: "Test Customer",
       email: "customer@example.com",
       role: "customer",
+      tokenVersion: 2,      
       passwordHash: "hashedPassword",
     };
 
@@ -230,6 +234,7 @@ describe("loginUser", () => {
       "name",
       "email",
       "role",
+      "tokenVersion"
     ]);
   });
 });
@@ -242,6 +247,7 @@ describe("changePassword", () => {
 
     mockUser = {
       passwordHash: "old-hashed-password",
+      tokenVersion: 0,
       save: jest.fn().mockResolvedValue(true),
     };
   });
@@ -271,6 +277,7 @@ describe("changePassword", () => {
     );
 
     expect(mockUser.passwordHash).toBe("new-hashed-password");
+    expect(mockUser.tokenVersion).toBe(1);
     expect(mockUser.save).toHaveBeenCalledTimes(1);
 
     expect(result).toEqual({
@@ -308,6 +315,7 @@ describe("changePassword", () => {
     });
 
     expect(bcrypt.hash).not.toHaveBeenCalled();
+    expect(mockUser.tokenVersion).toBe(0);
     expect(mockUser.save).not.toHaveBeenCalled();
   });
 });

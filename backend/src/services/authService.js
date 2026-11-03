@@ -46,7 +46,7 @@ const loginUser = async ({ email, password }) => {
   const normalizedEmail = email.trim().toLowerCase();
 
   const user = await User.findOne({ email: normalizedEmail })
-    .select("+passwordHash");
+    .select("+passwordHash +tokenVersion");
 
   if (!user) {
     throw new AppError("Invalid email or password", 401);
@@ -66,11 +66,14 @@ const loginUser = async ({ email, password }) => {
     name: user.name,
     email: user.email,
     role: user.role,
+    tokenVersion: user.tokenVersion,
   };
 };
 
 const changePassword = async (userId, currentPassword, newPassword) => {
-  const user = await User.findById(userId).select("+passwordHash");
+  const user = await User.findById(userId).select(
+    "+passwordHash +tokenVersion"
+  );
 
   if (!user) {
     throw new AppError("User not found", 404);
@@ -88,6 +91,7 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   const passwordHash = await bcrypt.hash(newPassword, 12);
 
   user.passwordHash = passwordHash;
+  user.tokenVersion += 1;
   await user.save();
 
   return {

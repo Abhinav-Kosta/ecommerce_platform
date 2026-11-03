@@ -164,6 +164,7 @@ describe("Authentication controller - login", () => {
     name: "Test Customer",
     email: "customer@example.com",
     role: "customer",
+    tokenVersion: 0,
   };
 
   beforeEach(() => {
@@ -204,7 +205,7 @@ describe("Authentication controller - login", () => {
         password: "SecurePass123",
       });
 
-    expect(generateToken).toHaveBeenCalledWith("user123");
+    expect(generateToken).toHaveBeenCalledWith("user123", 0);
   });
 
   it("sets the authentication cookie with the generated token", async () => {

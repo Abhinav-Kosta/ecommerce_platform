@@ -18,7 +18,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   const user = await loginUser(req.validated.body);
 
-  const token = generateToken(user.id);
+  const token = generateToken(user.id, user.tokenVersion);
 
   setAuthCookie(res, token);
 

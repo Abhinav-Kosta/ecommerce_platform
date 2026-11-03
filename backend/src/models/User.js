@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
@@ -35,6 +34,11 @@ const userSchema = new mongoose.Schema(
       default: "customer",
       required: true,
     },
+    tokenVersion: {
+    type: Number,
+    default: 0,
+    select: false,
+  },
   },
   {
     timestamps: true,

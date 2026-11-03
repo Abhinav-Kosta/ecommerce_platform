@@ -18,7 +18,10 @@ describe("Token utilities", () => {
     const token = generateToken("user123");
 
     expect(jwt.sign).toHaveBeenCalledWith(
-      { id: "user123" },
+      {
+        id: "user123",
+        tokenVersion: 0,
+      },
       "test-secret",
       { expiresIn: "1d" }
     );
@@ -33,9 +36,54 @@ describe("Token utilities", () => {
     generateToken("user123");
 
     expect(jwt.sign).toHaveBeenCalledWith(
-      { id: "user123" },
+      {
+        id: "user123",
+        tokenVersion: 0,
+      },
       "test-secret",
       { expiresIn: "1d" }
+    );
+  });
+});
+
+describe("generateToken", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("should generate a token with user ID and token version", () => {
+    jwt.sign.mockReturnValue("mock-jwt-token");
+
+    const token = generateToken("user123", 2);
+
+    expect(jwt.sign).toHaveBeenCalledWith(
+      {
+        id: "user123",
+        tokenVersion: 2,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN || "1d",
+      }
+    );
+
+    expect(token).toBe("mock-jwt-token");
+  });
+
+  test("should default tokenVersion to 0", () => {
+    jwt.sign.mockReturnValue("mock-jwt-token");
+
+    generateToken("user123");
+
+    expect(jwt.sign).toHaveBeenCalledWith(
+      {
+        id: "user123",
+        tokenVersion: 0,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN || "1d",
+      }
     );
   });
 });

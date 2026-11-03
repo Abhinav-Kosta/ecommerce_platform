@@ -8,13 +8,10 @@ jest.mock("jsonwebtoken", () => ({
 
 const express = require("express");
 const request = require("supertest");
+const cookieParser = require("cookie-parser");
 
 const User = require("../src/models/User");
 const jwt = require("jsonwebtoken");
-
-//For testing purpose specifically
-const app = express();
-const cookieParser = require("cookie-parser");
 
 const { protect } = require("../src/middleware/authMiddleware");
 const errorMiddleware = require("../src/middleware/errorMiddleware");
@@ -27,14 +24,20 @@ describe("Authentication middleware - protect", () => {
     name: "Test Customer",
     email: "customer@example.com",
     role: "customer",
+    tokenVersion: 0,
+  };
+
+  // Mock the Mongoose query chain: findById().select()
+  const mockFindUser = (user) => {
+    User.findById.mockReturnValue({
+      select: jest.fn().mockResolvedValue(user),
+    });
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     app = express();
-
-    //For testing purpose specifically
     app.use(cookieParser());
 
     app.get("/protected", protect, (req, res) => {
@@ -91,9 +94,10 @@ describe("Authentication middleware - protect", () => {
   it("should reject requests when the user no longer exists", async () => {
     jwt.verify.mockReturnValue({
       id: "deleted-user",
+      tokenVersion: 0,
     });
 
-    User.findById.mockResolvedValue(null);
+    mockFindUser(null);
 
     const response = await request(app)
       .get("/protected")
@@ -103,12 +107,13 @@ describe("Authentication middleware - protect", () => {
     expect(User.findById).toHaveBeenCalledWith("deleted-user");
   });
 
-  it("should authenticate a user with a valid JWT", async () => {
+  it("should authenticate a user with a valid JWT and matching token version", async () => {
     jwt.verify.mockReturnValue({
       id: "user123",
+      tokenVersion: 0,
     });
 
-    User.findById.mockResolvedValue(mockUser);
+    mockFindUser(mockUser);
 
     const response = await request(app)
       .get("/protected")
@@ -119,6 +124,7 @@ describe("Authentication middleware - protect", () => {
     expect(response.body).toEqual({
       success: true,
       user: {
+        _id: "user123",
         id: "user123",
         name: "Test Customer",
         email: "customer@example.com",
@@ -134,14 +140,38 @@ describe("Authentication middleware - protect", () => {
     expect(User.findById).toHaveBeenCalledWith("user123");
   });
 
+  it("should reject a session when token versions do not match", async () => {
+    jwt.verify.mockReturnValue({
+      id: "user123",
+      tokenVersion: 0,
+    });
+
+    mockFindUser({
+      ...mockUser,
+      tokenVersion: 1,
+    });
+
+    const response = await request(app)
+      .get("/protected")
+      .set("Cookie", "token=old-token");
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe(
+      "Your session is no longer valid. Please log in again."
+    );
+  });
+
   it("should forward database errors to error middleware", async () => {
     jwt.verify.mockReturnValue({
       id: "user123",
+      tokenVersion: 0,
     });
 
-    User.findById.mockRejectedValue(
-      new Error("Database connection failed")
-    );
+    User.findById.mockReturnValue({
+      select: jest.fn().mockRejectedValue(
+        new Error("Database connection failed")
+      ),
+    });
 
     const response = await request(app)
       .get("/protected")
