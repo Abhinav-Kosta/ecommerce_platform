@@ -9,7 +9,12 @@ describe("Product Model", () => {
     discountPrice: 2499,
     category: "Electronics",
     brand: "SoundMax",
-    images: ["https://example.com/headphones.jpg"],
+    images: [
+      {
+        url: "https://example.com/headphones.jpg",
+        publicId: "ecommerce/products/headphones",
+      },
+    ],
     stock: 20,
   };
 
@@ -46,9 +51,13 @@ describe("Product Model", () => {
   it("should apply default values", () => {
     const product = new Product(validProduct);
 
-    expect(product.images).toEqual([
-      "https://example.com/headphones.jpg",
-    ]);
+    expect(product.images).toHaveLength(1);
+
+    expect(product.images[0]).toMatchObject({
+      url: "https://example.com/headphones.jpg",
+      publicId: "ecommerce/products/headphones",
+    });
+    
     expect(product.ratings).toBe(0);
     expect(product.numReviews).toBe(0);
     expect(product.isActive).toBe(true);
@@ -75,28 +84,6 @@ describe("Product Model", () => {
       name: "ValidationError",
     });
   });
-
-  // it("should reject a discount price greater than the original price", async () => {
-  //   const product = new Product({
-  //     ...validProduct,
-  //     discountPrice: 3500,
-  //   });
-
-  //   await expect(product.validate()).rejects.toMatchObject({
-  //     name: "ValidationError",
-  //   });
-  // });
-
-  // it("should reject a discount price equal to the original price", async () => {
-  //   const product = new Product({
-  //     ...validProduct,
-  //     discountPrice: 2999,
-  //   });
-
-  //   await expect(product.validate()).rejects.toMatchObject({
-  //     name: "ValidationError",
-  //   });
-  // });
 
   it("should allow a product without discountPrice", async () => {
     const product = new Product({

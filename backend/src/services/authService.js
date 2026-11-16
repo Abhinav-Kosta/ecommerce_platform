@@ -99,8 +99,30 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   };
 };
 
+
+const updateProfile = async (userId, { name }) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  user.name = name;
+  await user.save();
+
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt,
+  };
+};
+
+
 module.exports = {
   registerUser,
   loginUser,
   changePassword,
+  updateProfile,
 };

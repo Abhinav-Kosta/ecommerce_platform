@@ -67,8 +67,23 @@ const changePasswordSchema = Joi.object({
   }),
 }).unknown(false);
 
+const updateProfileSchema = Joi.object({
+  name: Joi.string()
+    .trim()
+    .min(2)
+    .max(80)
+    .required()
+    .messages({
+      "string.empty": "Name is required",
+      "string.min": "Name must be at least 2 characters",
+      "string.max": "Name cannot exceed 80 characters",
+      "any.required": "Name is required",
+    }),
+}).unknown(false);
+
 module.exports = {
   registerSchema,
   loginSchema,
   changePasswordSchema,
+  updateProfileSchema,
 };

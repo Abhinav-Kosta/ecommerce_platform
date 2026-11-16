@@ -3,7 +3,10 @@ const asyncHandler = require("../utils/asyncHandler");
 
 // Create a new product
 const createProduct = asyncHandler(async (req, res) => {
-  const product = await productService.createProduct(req.validated.body);
+  const product = await productService.createProduct(
+    req.validated.body,
+    req.files
+  );
 
   res.status(201).json({
     status: "success",
@@ -41,7 +44,8 @@ const getProductById = asyncHandler(async (req, res) => {
 const updateProduct = asyncHandler(async (req, res) => {
   const product = await productService.updateProduct(
     req.validated.params.id,
-    req.validated.body
+    req.validated.body,
+    req.files
   );
 
   res.status(200).json({

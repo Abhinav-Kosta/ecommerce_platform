@@ -1,6 +1,11 @@
 const Product = require("../models/Product");
 const AppError = require("../utils/AppError");
 
+const {
+  uploadMultipleImages,
+  deleteImage,
+} = require("./cloudinaryService");
+
 const validateDiscountPrice = (price, discountPrice) => {
   if (
     discountPrice !== undefined &&
@@ -15,12 +20,25 @@ const validateDiscountPrice = (price, discountPrice) => {
 };
 
 // Create a new product
-const createProduct = async (productData) => {
+const createProduct = async (productData, files = []) => {
   validateDiscountPrice(productData.price, productData.discountPrice);
 
-  const product = await Product.create(productData);
+  const uploadedImages = await uploadMultipleImages(files);
 
-  return product;
+  try {
+    const product = await Product.create({
+      ...productData,
+      images: uploadedImages,
+    });
+
+    return product;
+  } catch (error) {
+    await Promise.all(
+      uploadedImages.map((image) => deleteImage(image.publicId))
+    );
+
+    throw error;
+  }
 };
 
 // Get all active products with filtering, sorting, and pagination
@@ -122,7 +140,7 @@ const getProductById = async (productId) => {
 };
 
 // Update an active product
-const updateProduct = async (productId, updateData) => {
+const updateProduct = async (productId, updateData, files = []) => {
   const existingProduct = await Product.findOne({
     _id: productId,
     isActive: true,
@@ -144,16 +162,41 @@ const updateProduct = async (productId, updateData) => {
 
   validateDiscountPrice(updatedPrice, updatedDiscountPrice);
 
-  const product = await Product.findByIdAndUpdate(
-    productId,
-    updateData,
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+  let uploadedImages = [];
 
-  return product;
+  try {
+    const updatePayload = { ...updateData };
+
+    if (files.length > 0) {
+      uploadedImages = await uploadMultipleImages(files);
+      updatePayload.images = uploadedImages;
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      productId,
+      updatePayload,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (uploadedImages.length > 0) {
+      await Promise.allSettled(
+        existingProduct.images.map((image) =>
+          deleteImage(image.publicId)
+        )
+      );
+    }
+
+    return product;
+  } catch (error) {
+    await Promise.allSettled(
+      uploadedImages.map((image) => deleteImage(image.publicId))
+    );
+
+    throw error;
+  }
 };
 
 // Soft-delete an active product

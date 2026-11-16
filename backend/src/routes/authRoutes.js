@@ -4,14 +4,16 @@ const {
   register, 
   login, 
   logout, 
-  getMe, 
+  getMe,
+  updateMyProfile,
   updatePassword 
 } = require("../controllers/authController");
 
 const { 
   registerSchema, 
   loginSchema, 
-  changePasswordSchema, 
+  changePasswordSchema,
+  updateProfileSchema,
 } = require("../validators/authValidators");
 
 const validateRequest = require("../middleware/validateRequest");
@@ -21,6 +23,13 @@ const asyncHandler = require("../utils/asyncHandler");
 const router = express.Router();
 
 router.get("/me", protect, asyncHandler(getMe));
+
+router.patch(
+  "/me",
+  protect,
+  validateRequest(updateProfileSchema, "body"),
+  asyncHandler(updateMyProfile)
+);
 
 router.post(
   "/register",

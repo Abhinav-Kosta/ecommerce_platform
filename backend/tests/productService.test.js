@@ -43,7 +43,10 @@ describe("Product Service", () => {
 
       const result = await createProduct(productData);
 
-      expect(Product.create).toHaveBeenCalledWith(productData);
+      expect(Product.create).toHaveBeenCalledWith({
+        ...productData,
+        images: [],
+      });
       expect(result).toEqual(createdProduct);
     });
 

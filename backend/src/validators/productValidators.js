@@ -17,9 +17,9 @@ const createProductSchema = Joi.object({
 
   brand: Joi.string().trim().max(100).allow("", null).optional(),
 
-  images: Joi.array()
-    .items(Joi.string().uri())
-    .default([]),
+  // images: Joi.array()
+  //   .items(Joi.string().uri())
+  //   .default([]),
 
   stock: Joi.number().integer().min(0).required(),
 });
@@ -39,8 +39,8 @@ const updateProductSchema = Joi.object({
 
   brand: Joi.string().trim().max(100).allow("", null),
 
-  images: Joi.array()
-    .items(Joi.string().uri()),
+  // images: Joi.array()
+  //   .items(Joi.string().uri()),
 
   stock: Joi.number().integer().min(0),
 }).min(1)

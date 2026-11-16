@@ -59,7 +59,10 @@ describe("Product Controller", () => {
 
       await createProduct(req, res);
 
-      expect(productService.createProduct).toHaveBeenCalledWith(productData);
+      expect(productService.createProduct).toHaveBeenCalledWith(
+        productData,
+        undefined
+      );
 
       expect(res.status).toHaveBeenCalledWith(201);
 
@@ -162,7 +165,8 @@ describe("Product Controller", () => {
 
       expect(productService.updateProduct).toHaveBeenCalledWith(
         "product123",
-        updateData
+        updateData,
+        undefined
       );
 
       expect(res.status).toHaveBeenCalledWith(200);

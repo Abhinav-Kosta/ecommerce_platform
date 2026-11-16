@@ -1,4 +1,5 @@
 const express = require("express");
+const upload = require("../middleware/uploadMiddleware");
 
 const {
   createProduct,
@@ -41,6 +42,7 @@ router.post(
   "/",
   protect,
   restrictTo("admin"),
+  upload.array("images", 5),
   validateRequest(createProductSchema, "body"),
   createProduct
 );
@@ -49,6 +51,7 @@ router.patch(
   "/:id",
   protect,
   restrictTo("admin"),
+  upload.array("images", 5),
   validateRequest(productIdSchema, "params"),
   validateRequest(updateProductSchema, "body"),
   updateProduct

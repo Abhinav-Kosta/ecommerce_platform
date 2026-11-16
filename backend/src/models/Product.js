@@ -37,10 +37,18 @@ const productSchema = new mongoose.Schema(
       trim: true,
     },
 
-    images: {
-      type: [String],
-      default: [],
-    },
+    images: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        publicId: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
 
     stock: {
       type: Number,

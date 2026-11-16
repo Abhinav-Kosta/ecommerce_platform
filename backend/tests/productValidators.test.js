@@ -13,7 +13,6 @@ describe("Product Validators - Create Product", () => {
     discountPrice: 2499,
     category: "Electronics",
     brand: "SoundMax",
-    images: ["https://example.com/headphones.jpg"],
     stock: 20,
   };
 
@@ -114,24 +113,24 @@ describe("Product Validators - Create Product", () => {
     expect(error).toBeDefined();
   });
 
-  it("should default images to an empty array", () => {
-    const product = { ...validProduct };
-    delete product.images;
+  // it("should default images to an empty array", () => {
+  //   const product = { ...validProduct };
+  //   delete product.images;
 
-    const { error, value } = createProductSchema.validate(product);
+  //   const { error, value } = createProductSchema.validate(product);
 
-    expect(error).toBeUndefined();
-    expect(value.images).toEqual([]);
-  });
+  //   expect(error).toBeUndefined();
+  //   expect(value.images).toEqual([]);
+  // });
 
-  it("should reject invalid image URLs", () => {
-    const { error } = createProductSchema.validate({
-      ...validProduct,
-      images: ["not-a-valid-url"],
-    });
+  // it("should reject invalid image URLs", () => {
+  //   const { error } = createProductSchema.validate({
+  //     ...validProduct,
+  //     images: ["not-a-valid-url"],
+  //   });
 
-    expect(error).toBeDefined();
-  });
+  //   expect(error).toBeDefined();
+  // });
 
   it("should reject protected fields supplied by the client", () => {
     const { error } = createProductSchema.validate({

@@ -1,4 +1,4 @@
-const { registerUser, loginUser, changePassword } = require("../services/authService");
+const { registerUser, loginUser, changePassword, updateProfile } = require("../services/authService");
 
 const { generateToken } = require("../utils/tokenUtils");
 const { setAuthCookie, clearAuthCookie, } = require("../utils/cookieUtils");
@@ -52,6 +52,21 @@ const getMe = async (req, res) => {
   });
 };
 
+const updateMyProfile = async (req, res) => {
+  const user = await updateProfile(
+    req.user._id,
+    req.validated.body
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Profile updated successfully",
+    data: {
+      user,
+    },
+  });
+};
+
 const updatePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.validated.body;
 
@@ -80,6 +95,7 @@ module.exports = {
   register,
   login,
   getMe,
+  updateMyProfile,
   updatePassword,
   logout,
 };
