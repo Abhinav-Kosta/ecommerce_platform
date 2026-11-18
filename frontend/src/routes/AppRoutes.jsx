@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import HomePage from "../pages/HomePage";
 import ProductsPage from "../pages/ProductsPage";
+import ProductDetailsPage from "../pages/ProductDetailsPage";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import AccountPage from "../pages/AccountPage";
@@ -17,6 +18,7 @@ function AppRoutes() {
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/products" element={<ProductsPage />} />
+        <Route path="/products/:productId" element={<ProductDetailsPage />} />
         
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<LoginPage />} />

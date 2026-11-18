@@ -63,20 +63,32 @@ function MainLayout() {
             </>
           )}
           {!loading && user && (
-            <Button
-              color="inherit"
-              onClick={async () => {
-                try {
-                  await logout();
-                } catch (error) {
-                  console.error("Logout failed:", error);
-                } finally {
-                  navigate("/");
-                }
-              }}
-            >
-              Logout
-            </Button>
+            <>
+              {user.role === "admin" && (
+                <Button
+                  color="inherit"
+                  component={RouterLink}
+                  to="/admin/products"
+                >
+                  Admin Dashboard
+                </Button>
+              )}
+          
+              <Button
+                color="inherit"
+                onClick={async () => {
+                  try {
+                    await logout();
+                  } catch (error) {
+                    console.error("Logout failed:", error);
+                  } finally {
+                    navigate("/");
+                  }
+                }}
+              >
+                Logout
+              </Button>
+            </>
           )}
         </Toolbar>
       </AppBar>

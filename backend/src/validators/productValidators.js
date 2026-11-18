@@ -42,6 +42,8 @@ const updateProductSchema = Joi.object({
   // images: Joi.array()
   //   .items(Joi.string().uri()),
 
+  imagesToRemove: Joi.string().optional(),
+
   stock: Joi.number().integer().min(0),
 }).min(1)
   .custom((value, helpers) => {

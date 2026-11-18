@@ -150,6 +150,35 @@ const updateProduct = async (productId, updateData, files = []) => {
     throw new AppError("Product not found", 404);
   }
 
+  let imagesToRemove = [];
+
+  if (updateData.imagesToRemove) {
+    try {
+      imagesToRemove = JSON.parse(updateData.imagesToRemove);
+    } catch (error) {
+      throw new AppError("Invalid image removal data", 400);
+    }
+
+    if (
+      !Array.isArray(imagesToRemove) ||
+      !imagesToRemove.every((id) => typeof id === "string")
+    ) {
+      throw new AppError("Invalid image removal data", 400);
+    }
+
+    const existingImageIds = existingProduct.images.map(
+      (image) => image.publicId
+    );
+
+    const invalidImageIds = imagesToRemove.some(
+      (id) => !existingImageIds.includes(id)
+    );
+
+    if (invalidImageIds) {
+      throw new AppError("Invalid image removal request", 400);
+    }
+  }
+
   const updatedPrice =
     updateData.price !== undefined
       ? updateData.price
@@ -167,9 +196,21 @@ const updateProduct = async (productId, updateData, files = []) => {
   try {
     const updatePayload = { ...updateData };
 
+    delete updatePayload.imagesToRemove;
+
     if (files.length > 0) {
       uploadedImages = await uploadMultipleImages(files);
-      updatePayload.images = uploadedImages;
+    }
+
+    if (files.length > 0 || imagesToRemove.length > 0) {
+      const remainingImages = existingProduct.images.filter(
+        (image) => !imagesToRemove.includes(image.publicId)
+      );
+    
+      updatePayload.images = [
+        ...remainingImages,
+        ...uploadedImages,
+      ];
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -181,10 +222,10 @@ const updateProduct = async (productId, updateData, files = []) => {
       }
     );
 
-    if (uploadedImages.length > 0) {
+    if (imagesToRemove.length > 0) {
       await Promise.allSettled(
-        existingProduct.images.map((image) =>
-          deleteImage(image.publicId)
+        imagesToRemove.map((publicId) =>
+          deleteImage(publicId)
         )
       );
     }

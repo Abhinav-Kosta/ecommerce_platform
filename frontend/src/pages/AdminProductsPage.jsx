@@ -18,14 +18,21 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
 } from "@mui/material";
 
-import { getProducts, createProduct } from "../api/productApi";
+import { getProducts, createProduct, updateProduct, deleteProduct } from "../api/productApi";
 
 const AdminProductsPage = () => {
   const [products, setProducts] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+    totalProducts: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -40,9 +47,36 @@ const AdminProductsPage = () => {
     stock: "",
   });
 
+  const [editingProductId, setEditingProductId] = useState(null);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
   const [images, setImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
+  const [imagesToRemove, setImagesToRemove] = useState([]);
+
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      price: "",
+      discountPrice: "",
+      category: "",
+      brand: "",
+      stock: "",
+    });
+
+    setImages([]);
+    setExistingImages([]);
+    setImagesToRemove([]);
+    setEditingProductId(null);
+    setFormError("");
+  };
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -51,6 +85,14 @@ const AdminProductsPage = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleRemoveExistingImage = (publicId) => {
+    setExistingImages((prev) =>
+      prev.filter((image) => image.publicId !== publicId)
+    );
+
+    setImagesToRemove((prev) => [...prev, publicId]);
   };
 
   const handleImageChange = (event) => {
@@ -65,6 +107,64 @@ const AdminProductsPage = () => {
 
     setFormError("");
     setImages(selectedImages);
+  };
+
+  const handleEdit = (product) => {
+    setEditingProductId(product._id);
+
+    setFormData({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      discountPrice: product.discountPrice || "",
+      category: product.category,
+      brand: product.brand || "",
+      stock: product.stock,
+    });
+
+    setImages([]);
+    setExistingImages(product.images || []);
+    setFormError("");
+    setOpenDialog(true);
+  };
+
+  const handleDeleteClick = (product) => {
+    setSelectedProduct(product);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedProduct) return;
+
+    setDeleting(true);
+
+    try {
+      await deleteProduct(selectedProduct._id);
+
+      const response = await getProducts({
+        page: pagination.page,
+        limit: pagination.limit,
+      });
+      
+      setProducts(response.data.products);
+      
+      setPagination({
+        page: response.data.pagination.currentPage,
+        limit: response.data.pagination.limit,
+        totalPages: response.data.pagination.totalPages,
+        totalProducts: response.data.pagination.totalProducts,
+      });
+
+      setDeleteDialogOpen(false);
+      setSelectedProduct(null);
+    } catch (error) {
+      setError(
+        error.response?.data?.message ||
+        "Failed to delete product"
+      );
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -86,22 +186,46 @@ const AdminProductsPage = () => {
         productFormData.append("images", image);
       });
 
-      await createProduct(productFormData);
+      if (editingProductId && imagesToRemove.length > 0) {
+        productFormData.append(
+          "imagesToRemove",
+          JSON.stringify(imagesToRemove)
+        );
+      }
 
-      const response = await getProducts();
-      setProducts(response.data.products);
+      if (editingProductId) {
+        await updateProduct(editingProductId, productFormData);
+      } else {
+        await createProduct(productFormData);
+      }
 
-      setFormData({
-        name: "",
-        description: "",
-        price: "",
-        discountPrice: "",
-        category: "",
-        brand: "",
-        stock: "",
+      const response = await getProducts({
+        page: pagination.page,
+        limit: pagination.limit,
       });
 
-      setImages([]);
+      setProducts(response.data.products);
+
+      setPagination({
+        page: response.data.pagination.currentPage,
+        limit: response.data.pagination.limit,
+        totalPages: response.data.pagination.totalPages,
+        totalProducts: response.data.pagination.totalProducts,
+      });
+
+      // setFormData({
+      //   name: "",
+      //   description: "",
+      //   price: "",
+      //   discountPrice: "",
+      //   category: "",
+      //   brand: "",
+      //   stock: "",
+      // });
+
+      // setImages([]);
+      // setOpenDialog(false);
+      resetForm();
       setOpenDialog(false);
     } catch (error) {
       setFormError(
@@ -116,8 +240,19 @@ const AdminProductsPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await getProducts();
+        const response = await getProducts({
+          page: pagination.page,
+          limit: pagination.limit,
+        });
+
         setProducts(response.data.products);
+
+        setPagination({
+          page: response.data.pagination.currentPage,
+          limit: response.data.pagination.limit,
+          totalPages: response.data.pagination.totalPages,
+          totalProducts: response.data.pagination.totalProducts,
+        });
       } catch (error) {
         setError(
           error.response?.data?.message ||
@@ -129,7 +264,7 @@ const AdminProductsPage = () => {
     };
 
     fetchProducts();
-  }, []);
+  }, [pagination.page, pagination.limit]);
 
   return (
     <Container maxWidth="lg">
@@ -162,7 +297,9 @@ const AdminProductsPage = () => {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Add New Product</DialogTitle>
+        <DialogTitle>
+          {editingProductId ? "Edit Product" : "Add New Product"}
+        </DialogTitle>
               
         <Box component="form" onSubmit={handleSubmit}>
           <DialogContent>
@@ -261,10 +398,50 @@ const AdminProductsPage = () => {
                     onChange={handleImageChange}
                   />
                 </Button>
+
+                {existingImages.map((image) => (
+                  <Box key={image.publicId}>
+                    <Box
+                      component="img"
+                      src={image.url}
+                      alt="Existing product"
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        objectFit: "cover",
+                        borderRadius: 1,
+                      }}
+                    />
+
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => handleRemoveExistingImage(image.publicId)}
+                    >
+                      Remove
+                    </Button>
+                  </Box>
+                ))}
               
                 <Typography variant="body2" sx={{ mt: 1 }}>
                   {images.length} image(s) selected. Maximum 5.
                 </Typography>
+                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mt: 2 }}>
+                  {images.map((image, index) => (
+                    <Box
+                      key={`${image.name}-${index}`}
+                      component="img"
+                      src={URL.createObjectURL(image)}
+                      alt={image.name}
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        objectFit: "cover",
+                        borderRadius: 1,
+                      }}
+                    />
+                  ))}
+                </Box>
               </Grid>
             </Grid>
               
@@ -277,7 +454,10 @@ const AdminProductsPage = () => {
           
           <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button
-              onClick={() => setOpenDialog(false)}
+              onClick={() => {
+                resetForm();
+                setOpenDialog(false);
+              }}
               disabled={submitting}
             >
               Cancel
@@ -288,10 +468,50 @@ const AdminProductsPage = () => {
               variant="contained"
               disabled={submitting}
             >
-              {submitting ? "Creating..." : "Create Product"}
+              {submitting
+                ? editingProductId
+                  ? "Updating..."
+                  : "Creating..."
+                : editingProductId
+                  ? "Update Product"
+                  : "Create Product"}
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => !deleting && setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Delete Product</DialogTitle>
+
+        <DialogContent>
+          Are you sure you want to delete{" "}
+          <strong>{selectedProduct?.name}</strong>?
+          This action will make the product inactive.
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setDeleteDialogOpen(false);
+              setSelectedProduct(null);
+            }}
+            disabled={deleting}
+          >
+            Cancel
+          </Button>
+          
+          <Button
+            onClick={confirmDelete}
+            color="error"
+            variant="contained"
+            disabled={deleting}
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {loading && (
@@ -312,6 +532,7 @@ const AdminProductsPage = () => {
                 <TableCell><strong>Category</strong></TableCell>
                 <TableCell><strong>Price</strong></TableCell>
                 <TableCell><strong>Stock</strong></TableCell>
+                <TableCell><strong>Actions</strong></TableCell>
               </TableRow>
             </TableHead>
 
@@ -342,11 +563,31 @@ const AdminProductsPage = () => {
                       ₹{product.price.toLocaleString("en-IN")}
                     </TableCell>
                     <TableCell>{product.stock}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => handleEdit(product)}
+                        >
+                          Edit
+                        </Button>
+
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          onClick={() => handleDeleteClick(product)}
+                        >
+                          Delete
+                        </Button>
+                      </Box>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={6} align="center">
                     No products found.
                   </TableCell>
                 </TableRow>
@@ -355,6 +596,26 @@ const AdminProductsPage = () => {
           </Table>
         </TableContainer>
       )}
+      <TablePagination
+        component="div"
+        count={pagination.totalProducts}
+        page={pagination.page - 1}
+        rowsPerPage={pagination.limit}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        onPageChange={(event, newPage) => {
+          setPagination((prev) => ({
+            ...prev,
+            page: newPage + 1,
+          }));
+        }}
+        onRowsPerPageChange={(event) => {
+          setPagination((prev) => ({
+            ...prev,
+            page: 1,
+            limit: Number(event.target.value),
+          }));
+        }}
+      />
     </Container>
   );
 };
