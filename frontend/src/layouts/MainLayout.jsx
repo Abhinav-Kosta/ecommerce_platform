@@ -73,13 +73,31 @@ function MainLayout() {
           )}
           {!loading && user && (
             <>
-              {user.role === "admin" && (
+              {user.role === "admin" ? (
+                <>
+                  <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/admin/products"
+                  >
+                    Products Management
+                  </Button>
+              
+                  <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/admin/orders"
+                  >
+                    Order Management
+                  </Button>
+                </>
+              ) : (
                 <Button
                   color="inherit"
                   component={RouterLink}
-                  to="/admin/products"
+                  to="/my-orders"
                 >
-                  Admin Dashboard
+                  My Orders
                 </Button>
               )}
           

@@ -59,6 +59,111 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
   return order;
 };
 
+const getUserOrders = async (userId, page, limit) => {
+  const skip = (page - 1) * limit;
+
+  const [orders, totalOrders] = await Promise.all([
+    Order.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+
+    Order.countDocuments({ user: userId }),
+  ]);
+
+  return {
+    orders,
+    totalOrders,
+    currentPage: page,
+    totalPages: Math.ceil(totalOrders / limit),
+  };
+};
+
+const getOrderById = async (orderId, userId) => {
+  const order = await Order.findOne({
+    _id: orderId,
+    user: userId,
+  });
+
+  if (!order) {
+    throw new AppError("Order not found", 404);
+  }
+
+  return order;
+};
+
+const getAdminOrderById = async (orderId) => {
+  const order = await Order.findById(orderId)
+    .populate("user", "name email");
+
+  if (!order) {
+    throw new AppError("Order not found", 404);
+  }
+
+  return order;
+};
+
+const getAllOrders = async (page, limit) => {
+  const skip = (page - 1) * limit;
+
+  const [orders, totalOrders] = await Promise.all([
+    Order.find()
+      .populate("user", "name email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+
+    Order.countDocuments(),
+  ]);
+
+  return {
+    orders,
+    totalOrders,
+    currentPage: page,
+    totalPages: Math.ceil(totalOrders / limit),
+  };
+};
+
+const updateOrderStatus = async (orderId, orderStatus) => {
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    throw new AppError("Order not found", 404);
+  }
+
+  if (order.paymentStatus !== "succeeded") {
+    throw new AppError(
+      "Only successfully paid orders can be fulfilled",
+      400
+    );
+  }
+
+  const allowedTransitions = {
+    processing: ["shipped"],
+    shipped: ["delivered"],
+  };
+
+  const allowedStatuses = allowedTransitions[order.orderStatus] || [];
+
+  if (!allowedStatuses.includes(orderStatus)) {
+    throw new AppError(
+      `Cannot change order status from ${order.orderStatus} to ${orderStatus}`,
+      400
+    );
+  }
+
+  order.orderStatus = orderStatus;
+
+  await order.save();
+
+  return order;
+};
+
 module.exports = {
   createOrder,
+  getUserOrders,
+  getOrderById,
+  getAdminOrderById,
+  getAllOrders,
+  updateOrderStatus,
 };

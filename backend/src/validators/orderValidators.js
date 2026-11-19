@@ -26,6 +26,13 @@ const createOrderSchema = Joi.object({
     .required(),
 });
 
+const updateOrderStatusSchema = Joi.object({
+  orderStatus: Joi.string()
+    .valid("shipped", "delivered")
+    .required(),
+});
+
 module.exports = {
   createOrderSchema,
+  updateOrderStatusSchema
 };

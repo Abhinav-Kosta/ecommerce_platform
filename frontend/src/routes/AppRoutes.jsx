@@ -10,6 +10,9 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
 import AdminRoute from "../components/AdminRoute";
 import AdminProductsPage from "../pages/AdminProductsPage";
+import AdminOrdersPage from "../pages/AdminOrdersPage";
+import MyOrdersPage from "../pages/MyOrdersPage";
+import OrderDetailsPage from "../pages/OrderDetailsPage";
 import CartPage from "../pages/CartPage";
 import CheckoutPage from "../pages/CheckoutPage";
 
@@ -33,6 +36,8 @@ function AppRoutes() {
           <Route path="/account" element={<AccountPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/my-orders" element={<MyOrdersPage />} />
+          <Route path="/my-orders/:orderId" element={<OrderDetailsPage />} />
         </Route>
 
         {/* Admin Routes */}
@@ -40,6 +45,14 @@ function AppRoutes() {
           <Route
             path="/admin/products"
             element={<AdminProductsPage />}
+          />
+          <Route
+            path="/admin/orders"
+            element={<AdminOrdersPage />}
+          />
+          <Route
+            path="/admin/orders/:orderId"
+            element={<OrderDetailsPage />}
           />
         </Route>
       </Route>
