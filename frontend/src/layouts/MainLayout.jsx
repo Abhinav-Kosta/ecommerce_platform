@@ -7,13 +7,16 @@ import {
   IconButton,
   Box,
   Container,
+  Badge,
 } from "@mui/material";
 
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 function MainLayout() {
   const { user, loading, logout } = useAuth();
+  const { cartItemCount } = useCart();
 
   const navigate = useNavigate();
   
@@ -38,11 +41,17 @@ function MainLayout() {
 
           <IconButton
             color="inherit"
-            aria-label="Shopping cart"
+            aria-label={`Shopping cart with ${cartItemCount} items`}
             component={RouterLink}
             to="/cart"
           >
-            <ShoppingCartOutlinedIcon />
+            <Badge
+              badgeContent={cartItemCount}
+              color="error"
+              showZero={false}
+            >
+              <ShoppingCartOutlinedIcon />
+            </Badge>
           </IconButton>
 
           {!loading && !user && (

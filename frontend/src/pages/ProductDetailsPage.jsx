@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 
 import { getProductById } from "../api/productApi";
+import { useCart } from "../context/CartContext";
 
 function ProductDetailsPage() {
   const { productId } = useParams();
@@ -24,6 +25,8 @@ function ProductDetailsPage() {
   const [selectedImage, setSelectedImage] = useState(0);
 
   const [quantity, setQuantity] = useState(1);
+
+  const { addProductToCart } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -221,6 +224,26 @@ function ProductDetailsPage() {
                 </Button>
               </Box>
             </Box>
+            <Button
+              variant="contained"
+              fullWidth
+              size="large"
+              sx={{ mt: 3 }}
+              disabled={product.stock === 0}
+              onClick={async () => {
+                try {
+                  await addProductToCart(product._id, quantity);
+                  alert("Product added to cart successfully!");
+                } catch (error) {
+                  alert(
+                    error.response?.data?.message ||
+                    "Failed to add product to cart"
+                  );
+                }
+              }}
+            >
+              {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+            </Button>
           </Grid>
         </Grid>
       </Box>

@@ -12,7 +12,10 @@ const {
 } = require("./validators/commonValidators");
 
 const authRoutes = require("./routes/authRoutes");
+const cartRoutes = require("./routes/cartRoutes");
 const productRoutes = require("./routes/productRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 const errorMiddleware = require("./middleware/errorMiddleware");
 const notFoundMiddleware = require("./middleware/notFoundMiddleware");
@@ -58,6 +61,9 @@ app.get("/api/v1/health/db", (req, res) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/cart", cartRoutes);
+app.use("/api/v1/orders", orderRoutes);
+app.use("/api/v1/payments", paymentRoutes);
 
 //Testing purpose
 

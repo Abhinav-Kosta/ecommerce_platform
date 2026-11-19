@@ -5,6 +5,11 @@ const errorMiddleware = (err, req, res, next) => {
     return next(err);
   }
 
+  // Log unexpected server errors
+  if (statusCode >= 500) {
+    console.error("SERVER ERROR:", err);
+  }
+
   const response = {
     success: false,
     status: err.status || "error",
