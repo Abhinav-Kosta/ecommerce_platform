@@ -2,7 +2,7 @@ const setAuthCookie = (res, token) => {
   const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge:
       Number(process.env.COOKIE_EXPIRES_IN || 1) *
       24 *
@@ -18,7 +18,7 @@ const clearAuthCookie = (res) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
 };
 
